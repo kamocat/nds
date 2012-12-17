@@ -1,0 +1,8 @@
+# I don't know what this file is, but it's
+# created when I run make, and cleaned when
+# I run make clean, so I think it's best
+# not to track it.
+# For some reason, just ignore *.a didn't take
+# care of the folder, so we'll explicitly ignore
+# the folder instead.
+lib/

@@ -1,0 +1,4 @@
+# This dldi file is created when we compile,
+# so I figure we shouldn't track it.
+*.dldi
+
