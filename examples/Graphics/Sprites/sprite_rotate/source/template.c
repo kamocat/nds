@@ -21,21 +21,30 @@ int main(void) {
 
 	u16* gfx = oamAllocateGfx(&oamMain, SpriteSize_32x32, SpriteColorFormat_256Color);
 
+	/* This is where we load the image.
+	 * In this case we're doing a really simple striped pattern,
+	 * but we could also load a bitmap. */
 	for(i = 0; i < 32 * 32 / 2; i++)
 	{
-		gfx[i] = 1 | (1 << 8);
+		//gfx[i] = 1 | (1 << 8);
+		gfx[i] = 0x201;	// alternating red and yellow
 	}
 
-	SPRITE_PALETTE[1] = RGB15(31,0,0);
+	SPRITE_PALETTE[1] = RGB15(31,0,0);	// full red
+	SPRITE_PALETTE[2] = RGB15(28,28,0);	// bright yellow
 
 	while(1) {
 
 		scanKeys();
 
+		/* Slow down the rotate if the left trigger is pressed
+		 * I'd like to do a fixed-point here, but I don't know how */
+		float inc = (keysHeld() & KEY_L)? 0.05 : 0.3;
+
 		if(keysHeld() & KEY_LEFT)
-			angle += degreesToAngle(2);
+			angle += degreesToAngle(inc);
 		if(keysHeld() & KEY_RIGHT)
-			angle -= degreesToAngle(2);
+			angle -= degreesToAngle(inc);
 
 		//-------------------------------------------------------------------------
 		// Set the first rotation/scale matrix
