@@ -21,6 +21,10 @@ SpriteSize sizes[] = {
 	SpriteSize_64x64, 	
 };
 
+// All sprites are the same size
+#define SPRITE_SIZE SpriteSize_8x8
+#define SPRITE_COLORF SpriteColorFormat_256Color
+
 //this is our game entity. Notice it has a bit more info than
 //would fit into OAM.  This method is a lot more flexible than trying
 //to treat oam as a game object directly.
@@ -29,8 +33,6 @@ typedef struct {
 	int dx, dy;
 	bool alive;
 	u16* gfx;
-	SpriteColorFormat format;
-	SpriteSize size;
 }mySprite;
 
 //an array of sprites
@@ -40,33 +42,31 @@ u32 spriteMemoryUsage = 0;
 
 u32 oomCount = 0;
 u32 allocationCount = 0;
-u32 spriteMemSize = 128 * 1024;
+u32 spriteMemSize = 128 * 1024;	// how is this calculated?
 
-bool oom = false;
+bool oom = false;	// out of memory?
 OamState *oam = &oamMain;
 
 //a sprite constructor
-void createSprite(mySprite* s, int x, int y, int z, SpriteSize size, SpriteColorFormat format, int dx, int dy) {
+void createSprite(mySprite* s, int x, int y, int z, int dx, int dy) {
 	s->alive = true;
 	s->x = x;
 	s->y = y;
 	s->z = z; 
 	s->dx = dx;
 	s->dy = dy;
-	s->size = size;
-	s->format = format;
     
 	//api: allocate a chunk of sprite graphics memory
-	s->gfx = oamAllocateGfx(oam, size, format);
+	s->gfx = oamAllocateGfx(oam, SPRITE_SIZE, SPRITE_COLORF);
 	
 	allocationCount++;
 	if(s->gfx) {
-		spriteMemoryUsage += (size & 0xFFF) << 5;
+		spriteMemoryUsage += (SPRITE_SIZE & 0xFFF) << 5;
 		oom = false;
 	} else {
 		oom = true;
 		//only a failure of the allocator if there was enough room
-		if(spriteMemoryUsage + ((size & 0xFFF) << 5) < spriteMemSize)
+		if(spriteMemoryUsage + ((SPRITE_SIZE & 0xFFF) << 5) < spriteMemSize)
 			oomCount++;
 	}
 }
@@ -78,7 +78,7 @@ void killSprite(mySprite *s) {
 	//api: free the graphics
 	if(s->gfx) {	
 		oamFreeGfx(oam, s->gfx);
-		spriteMemoryUsage -= (s->size & 0xFFF) << 5;
+		spriteMemoryUsage -= (SPRITE_SIZE& 0xFFF) << 5;
 	}
 
 	s->gfx = 0;
@@ -125,8 +125,8 @@ void updateSprites(void) {
 			sprites[i].x, sprites[i].y, 
 			0, 
 			0,
-			sprites[i].size,
-			sprites[i].format, 
+			SPRITE_SIZE,
+			SPRITE_COLORF,
 			sprites[i].gfx, 
 			-1, 
 			false, 
@@ -146,7 +146,7 @@ void randomSprite(mySprite* s) {
 	u16 color = c | (c << 8);
 
 	//create a randomly oriented sprite going off in a random direction
-	createSprite(s, rand() % 256, rand() % 192, 0, sizes[(rand() % 12)], SpriteColorFormat_256Color, rand() % 4 - 2, rand() % 4 - 2);
+	createSprite(s, rand() % 256, rand() % 192, 0, rand() % 4 - 2, rand() % 4 - 2);
 
 	//dont let sprites get stuck with 0 velocity
 	if(s->dx == 0 && s->dy == 0) {   
@@ -157,7 +157,7 @@ void randomSprite(mySprite* s) {
 	//the size (in pixels) is encoded in the low 12 bits of the Size attribute (shifted left by 5)
 	//we load new graphics each time as this is as much a test of my allocator as an example of api usage
 	if(s->gfx) {
-		swiCopy(&color, s->gfx, ((s->size & 0xFFF) << 4) | COPY_MODE_FILL);
+		swiCopy(&color, s->gfx, ((SPRITE_SIZE & 0xFFF) << 4) | COPY_MODE_FILL);
 	}	else {	
 		s->alive = false;
 	}
@@ -197,7 +197,6 @@ int main(void)  {
 	//create some sprites
 	for(i = 0; i < SPRITE_MAX; i++)
 		randomSprite(&sprites[i]);
-
 	//load a randomly colored palette
 	for(i = 0; i < 256; i++) {
       SPRITE_PALETTE[i] = rand();
