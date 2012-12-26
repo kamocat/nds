@@ -1,25 +1,10 @@
 #include <nds.h>
 #include <stdio.h>
+#include <time.h> // for time()
 
 //our very simple sprite engine...
-#define  SPRITE_MAX 128
+#define SPRITE_MAX 256
 
-//these are placed in an array to allow for random size selection
-//these are defined as part of the new sprite api
-SpriteSize sizes[] = {
-	SpriteSize_8x8, 
-	SpriteSize_8x16,
-	SpriteSize_16x8,
-	SpriteSize_8x32,
-	SpriteSize_16x16, 
-	SpriteSize_32x8,
-	SpriteSize_16x32,  
-	SpriteSize_32x16, 
-	SpriteSize_32x32, 
-	SpriteSize_32x64, 
-	SpriteSize_64x32, 
-	SpriteSize_64x64, 	
-};
 
 // All sprites are the same size
 #define SPRITE_SIZE SpriteSize_8x8
@@ -29,7 +14,7 @@ SpriteSize sizes[] = {
 //would fit into OAM.  This method is a lot more flexible than trying
 //to treat oam as a game object directly.
 typedef struct {
-	int x,y,z;
+	int x,y;
 	int dx, dy;
 	bool alive;
 	u16* gfx;
@@ -48,11 +33,10 @@ bool oom = false;	// out of memory?
 OamState *oam = &oamMain;
 
 //a sprite constructor
-void createSprite(mySprite* s, int x, int y, int z, int dx, int dy) {
+void createSprite(mySprite* s, int x, int y, int dx, int dy) {
 	s->alive = true;
 	s->x = x;
 	s->y = y;
-	s->z = z; 
 	s->dx = dx;
 	s->dy = dy;
     
@@ -84,38 +68,10 @@ void killSprite(mySprite *s) {
 	s->gfx = 0;
 }
 
-//a qsort function which sorts on z order
-int zsort(const void* a, const void* b) {
-	mySprite *first = (mySprite*)a;
-	mySprite *second = (mySprite*)b;
 
-	//the trivial case 
-	if(first == second) return 0;
-
-	//handle nulls
-	if(!first && second) return -1;
-	if(first && !second) return 1;
-
-	//a dead sprite is always after a living one in the sort
-	if(!first->alive && second->alive) return -1;
-	if(first->alive && !second->alive) return 1;
-	if(!first->alive && !second->alive) return 0;
-
-	//finally if both are alive and not null sort them by depth
-	if(first->z == second->z) return 0;
-	if(first->z < second->z ) return -1;
-	if(first->z > second->z) return 1;
-
-	return 0; 
-}  
-  
 //map our sprite to oam entries
 void updateSprites(void) {
 	int i;
-
-	//sort our sprites on z
-	//a more efficient way would be to keep a sorted list of sprites
-	qsort(sprites, SPRITE_MAX, sizeof(mySprite), zsort);
 
 	//set oam to values required by my sprite
 	for(i = 0; i < SPRITE_MAX; i++) {
@@ -140,13 +96,14 @@ void updateSprites(void) {
 //create a sprite with a random position, speed, and size 
 void randomSprite(mySprite* s) {
 	//pick a random color index 
-	u8 c = rand() % 256;
+	//u8 c = rand() % 2;
+	u8 c = 1;
 
 	//two pixels at a time
 	u16 color = c | (c << 8);
 
 	//create a randomly oriented sprite going off in a random direction
-	createSprite(s, rand() % 256, rand() % 192, 0, rand() % 4 - 2, rand() % 4 - 2);
+	createSprite(s, rand() % 256, rand() % 192, rand() % 4 - 2, rand() % 4 - 2);
 
 	//dont let sprites get stuck with 0 velocity
 	if(s->dx == 0 && s->dy == 0) {   
@@ -181,6 +138,9 @@ void moveSprites(void) {
 int main(void)  {
 	int i;
 	int memUsageTemp = 0xFFFFFFFF;
+
+	// seed our rand
+	srand(time(NULL));
 
 	videoSetMode(MODE_0_2D);
 	videoSetModeSub(MODE_0_2D);
