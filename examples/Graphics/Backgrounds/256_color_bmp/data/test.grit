@@ -1,2 +1,2 @@
 # tile format
--gt -mLf -m
+-gt -fh -W3 -gB 8

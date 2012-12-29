@@ -35,8 +35,9 @@ int main(void)
 
 	/* Plot some positions on the map 
 	*/
-	for( int i = 0; i < 256; ++i ) {
-		bg0map[i] = 1;
+	for( int i = 0; i < 32; ++i ) {
+		bg0map[i] = i%3;
+		bg0map[i+32] = i%3 + 3;
 	}
 
 	while(1) {
