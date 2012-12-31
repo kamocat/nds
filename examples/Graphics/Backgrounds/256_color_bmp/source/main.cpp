@@ -8,6 +8,9 @@
 // this has the same name as the image
 #include "spritesheet.h"
 
+
+#define TILEBASE 1
+
 int main(void)
 {
 	// Seed rand
@@ -21,28 +24,39 @@ int main(void)
 	iprintf("\t256 color bitmap demo\n");
 	iprintf("\tNow with tiling!\n");
 
-	//bgInit(0, BgType_Text8bpp, BgSize_T_256x256, 8, 1);
-	//bgInit(1, BgType_Text8bpp, BgSize_T_256x256, 8, 1);
-	//bgInit(2, BgType_Text8bpp, BgSize_T_256x256, 10, 1);
-	bgInit(3, BgType_Text8bpp, BgSize_T_256x256, 0, 1);
+	bgInit(0, BgType_Text8bpp, BgSize_T_256x256, 0, TILEBASE);
+	bgInit(1, BgType_Text8bpp, BgSize_T_256x256, 1, TILEBASE);
+	bgInit(2, BgType_Text8bpp, BgSize_T_256x256, 2, TILEBASE);
+	bgInit(3, BgType_Text8bpp, BgSize_T_256x256, 3, TILEBASE);
 
-	memcpy((void*)BG_TILE_RAM(1), spritesheetTiles, spritesheetTilesLen );
+
+	memcpy((void*)BG_TILE_RAM(TILEBASE), spritesheetTiles, spritesheetTilesLen );
 
 	dmaCopy(spritesheetPal, BG_PALETTE, spritesheetPalLen);	// set up the palette
 
+	// init all backgrounds to a transparent tile
+	for( int b = 0; b < 4; ++b ) {
+		u16 * map = bgGetMapPtr( b );
+		for( int i = 0; i < (32 * 32); ++i ) {
+			map[i] = 23; // a transparent tile
+		}
+	}
+
 
 	// Set up pointers to the map bases
-	u16 * creatures = (u16 *)BG_TILE_RAM(8);
-	u16 * ground = (u16 *)BG_TILE_RAM(0);
+	u16 * gasses = bgGetMapPtr( 0 );
+	u16 * creatures = bgGetMapPtr( 1 );
+	u16 * plants = bgGetMapPtr( 2 );
+	u16 * ground = bgGetMapPtr( 3 );
 
 	// Put up random ground tiles
 	for( int i = 0; i < (24 * 32); ++i ) {
-		ground[i] = rand()%2;
+		ground[i] = rand()%4;
 	}
 
 	/* random creatures array */
 	for( int i = 0; i < (24*32); ++i ) {
-		creatures[i] = 16; //rand()%6 + 32;
+		creatures[i] = rand()%22 + 16;	// make most blank
 	}
 
 	while(1) {
